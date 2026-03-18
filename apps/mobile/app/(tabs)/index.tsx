@@ -7,8 +7,15 @@ import {
   RecentWorkouts,
   type Workout,
 } from "@/components/home";
+import TrackingSection, {
+  type TrackingItem,
+} from "@/components/tracking/tracking-section";
 import { useAuth } from "@/contexts/auth";
+import { useHealthData } from "@/hooks/use-health-data";
+import { getAdaptiveStepGoal, getWaterGoalOz } from "@/services/tracking-goals";
 import { ScrollView, useColorScheme } from "react-native";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { createWaterLog, getTodayWaterSummary } from "@/services/water";
 import tw from "twrnc";
 
 export default function HomeScreen() {
@@ -16,7 +23,17 @@ export default function HomeScreen() {
   const isDark = scheme === "dark";
   const { user } = useAuth();
 
-  // User info from backend
+  const [trackingLayout, setTrackingLayout] = useState<"list" | "grid">("list");
+
+  const {
+    steps,
+    activeEnergy,
+    weeklyStepHistory,
+    isAvailable,
+    isAuthorized,
+    requestPermission,
+  } = useHealthData();
+
   const userName = user?.first_name ?? user?.username ?? "User";
 
   // TODO: Replace with real data once workout models exist in the backend
@@ -25,6 +42,23 @@ export default function HomeScreen() {
   const workoutsGoal = 5;
   const minutesDone = 0;
   const minutesGoal = 30;
+
+  const [waterOz, setWaterOz] = useState(24);
+
+  const parsedWeight = user?.weight != null ? Number(user.weight) : null;
+  const userWeightLb = Number.isFinite(parsedWeight) ? parsedWeight : null;
+
+  const caloriesGoal = 500;
+
+  const stepGoal = useMemo(
+    () => getAdaptiveStepGoal(weeklyStepHistory),
+    [weeklyStepHistory]
+  );
+
+  const waterGoal = useMemo(
+    () => getWaterGoalOz(userWeightLb),
+    [userWeightLb]
+  );
 
   const recentWorkouts: Workout[] = [
     { name: "Mobility", duration: "2 min" },
@@ -51,6 +85,58 @@ export default function HomeScreen() {
     console.log(`Quick pick: ${type}`);
     // TODO: Start corresponding quick workout
   };
+
+  const trackingItems: TrackingItem[] = useMemo(
+    () => [
+      {
+        id: "steps",
+        title: "Steps",
+        value: steps,
+        goal: stepGoal,
+        unit: "",
+        subtitle: !isAvailable
+          ? "Health data not available on this device"
+          : isAuthorized
+            ? "Synced from Apple Health"
+            : "Connect Apple Health to sync your steps",
+        buttonLabel: isAvailable && !isAuthorized ? "Connect Health" : undefined,
+        onPressButton:
+          isAvailable && !isAuthorized ? requestPermission : undefined,
+        ringColor: "#22C55E",
+      },
+      {
+        id: "water",
+        title: "Water",
+        value: waterOz,
+        goal: waterGoal,
+        unit: "oz",
+        subtitle: "Track your water intake manually",
+        buttonLabel: "Add 8 oz",
+        onPressButton: () => setWaterOz((prev) => prev + 8),
+        ringColor: "#3B82F6",
+      },
+      {
+        id: "calories",
+        title: "Calories Burned",
+        value: activeEnergy,
+        goal: caloriesGoal,
+        unit: "cal",
+        subtitle: "Calories burned through activity today",
+        ringColor: "#F97316",
+      },
+    ],
+    [
+      steps,
+      activeEnergy,
+      waterOz,
+      stepGoal,
+      waterGoal,
+      isAvailable,
+      isAuthorized,
+      requestPermission,
+      caloriesGoal,
+    ],
+  );
 
   return (
     <ScrollView
@@ -83,7 +169,13 @@ export default function HomeScreen() {
         showStreakRing={false}
       />
 
-      {/* Quick Picks */}
+      {/* Daily Tracking */}
+      <TrackingSection
+        title="Daily Tracking"
+        items={trackingItems}
+        layout={trackingLayout}
+      />
+
       <QuickPicks onPress={handleQuickPick} />
 
       {/* Recent Workouts */}
