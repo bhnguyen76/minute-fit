@@ -44,6 +44,7 @@ export default function AccountScreen() {
   }
 
   const settingsItems: SettingsItem[] = [
+    { label: "Daily Tracking", onPress: () => router.push("/(tabs)/account/tracking" as any) },
     { label: "Health", onPress: () => router.push("/(tabs)/account/health" as any) },
     { label: "Focus Mode", onPress: () => alert("Focus Mode Pressed") },
     { label: "Workouts/Week", onPress: () => alert("Workouts/Week Pressed") },
