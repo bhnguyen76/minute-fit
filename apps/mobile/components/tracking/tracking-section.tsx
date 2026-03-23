@@ -15,6 +15,7 @@ export type TrackingItem = {
   subtitle?: string;
   buttonLabel?: string;
   onPressButton?: () => void;
+  onPressCard?: () => void;
   ringColor?: string;
 };
 
@@ -33,7 +34,6 @@ export default function TrackingSection({
     { light: "#F9FAFB", dark: "#1F2937" },
     "background",
   );
-
   const borderColor = useThemeColor(
     { light: "#E5E7EB", dark: "#374151" },
     "icon",
@@ -42,7 +42,7 @@ export default function TrackingSection({
   return (
     <ThemedView
       style={[
-        tw`p-5 rounded-xl mb-6 border`,
+        tw`p-5 rounded-xl mb-3 border`,
         { backgroundColor: cardBgColor, borderColor },
       ]}
     >
@@ -73,6 +73,7 @@ export default function TrackingSection({
               subtitle={item.subtitle}
               buttonLabel={item.buttonLabel}
               onPressButton={item.onPressButton}
+              onPressCard={item.onPressCard}
               ringColor={item.ringColor}
               layout={layout}
             />

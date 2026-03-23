@@ -10,20 +10,19 @@ import {
 import TrackingSection, {
   type TrackingItem,
 } from "@/components/tracking/tracking-section";
+import WaterLogModal from "@/components/tracking/water-log-modal";
 import { useAuth } from "@/contexts/auth";
 import { useHealthData } from "@/hooks/use-health-data";
-import { getAdaptiveStepGoal, getWaterGoalOz } from "@/services/tracking-goals";
-import { ScrollView, useColorScheme } from "react-native";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { getAdaptiveStepGoal } from "@/services/tracking-goals";
 import { createWaterLog, getTodayWaterSummary } from "@/services/water";
+import { ScrollView, useColorScheme } from "react-native";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import tw from "twrnc";
 
 export default function HomeScreen() {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
   const { user } = useAuth();
-
-  const [trackingLayout, setTrackingLayout] = useState<"list" | "grid">("list");
 
   const {
     steps,
@@ -43,21 +42,50 @@ export default function HomeScreen() {
   const minutesDone = 0;
   const minutesGoal = 30;
 
-  const [waterOz, setWaterOz] = useState(24);
+  const [waterOz, setWaterOz] = useState(0);
+  const [isWaterLoading, setIsWaterLoading] = useState(false);
+  const [isWaterModalVisible, setIsWaterModalVisible] = useState(false);
 
   const parsedWeight = user?.weight != null ? Number(user.weight) : null;
-  const userWeightLb = Number.isFinite(parsedWeight) ? parsedWeight : null;
+  const hasValidWeight =
+    parsedWeight !== null && Number.isFinite(parsedWeight) && parsedWeight > 0;
+  const initialWaterGoal = hasValidWeight ? Math.round(parsedWeight / 2) : 64;
+  const [waterGoal, setWaterGoal] = useState(initialWaterGoal);
 
   const caloriesGoal = 500;
 
   const stepGoal = useMemo(
     () => getAdaptiveStepGoal(weeklyStepHistory),
-    [weeklyStepHistory]
+    [weeklyStepHistory],
   );
 
-  const waterGoal = useMemo(
-    () => getWaterGoalOz(userWeightLb),
-    [userWeightLb]
+  const loadWaterSummary = useCallback(async () => {
+    try {
+      setIsWaterLoading(true);
+      const summary = await getTodayWaterSummary();
+      setWaterOz(summary.total_oz);
+      setWaterGoal(summary.goal_oz);
+    } catch (error) {
+      console.error("Failed to load water summary:", error);
+    } finally {
+      setIsWaterLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWaterSummary();
+  }, [loadWaterSummary]);
+
+  const handleAddWater = useCallback(
+    async (amountOz: number) => {
+      try {
+        await createWaterLog({ amount_oz: amountOz });
+        setWaterOz((prev) => prev + amountOz);
+      } catch (error) {
+        console.error("Failed to log water:", error);
+      }
+    },
+    [],
   );
 
   const recentWorkouts: Workout[] = [
@@ -81,7 +109,9 @@ export default function HomeScreen() {
     // TODO: Show workout picker or swap to different workout
   };
 
-  const handleQuickPick = (type: "reset" | "stretch" | "cardio" | "strength") => {
+  const handleQuickPick = (
+    type: "reset" | "stretch" | "cardio" | "strength",
+  ) => {
     console.log(`Quick pick: ${type}`);
     // TODO: Start corresponding quick workout
   };
@@ -110,9 +140,10 @@ export default function HomeScreen() {
         value: waterOz,
         goal: waterGoal,
         unit: "oz",
-        subtitle: "Track your water intake manually",
-        buttonLabel: "Add 8 oz",
-        onPressButton: () => setWaterOz((prev) => prev + 8),
+        subtitle: isWaterLoading
+          ? "Loading today's water"
+          : "Tap to log water intake",
+        onPressCard: () => setIsWaterModalVisible(true),
         ringColor: "#3B82F6",
       },
       {
@@ -127,59 +158,64 @@ export default function HomeScreen() {
     ],
     [
       steps,
-      activeEnergy,
-      waterOz,
       stepGoal,
-      waterGoal,
       isAvailable,
       isAuthorized,
       requestPermission,
+      waterOz,
+      waterGoal,
+      isWaterLoading,
+      activeEnergy,
       caloriesGoal,
     ],
   );
 
   return (
-    <ScrollView
-      style={[tw`flex-1`, { backgroundColor: isDark ? "#111827" : "#FFFFFF" }]}
-      contentContainerStyle={tw`p-4 pt-10`}
-    >
-      {/* Greeting Header */}
-      <GreetingHeader userName={userName} streakDays={streakDays} />
+    <> 
+      <ScrollView
+        style={[tw`flex-1`, { backgroundColor: isDark ? "#111827" : "#FFFFFF" }]}
+        contentContainerStyle={tw`p-4 pt-10`}
+      >
+        <GreetingHeader userName={userName} streakDays={streakDays} />
 
-      {/* Start Now Button */}
-      <StartNowButton onPress={handleStartNow} />
+        <StartNowButton onPress={handleStartNow} />
 
-      {/* Next Workout Card */}
-      <NextWorkoutCard
-        title="Push Ups"
-        duration="1 min"
-        category="Chest"
-        difficulty="Medium"
-        equipment="No equipment"
-        onStart={handleStartWorkout}
-        onSwap={handleSwapWorkout}
+        <NextWorkoutCard
+          title="Push Ups"
+          duration="1 min"
+          category="Chest"
+          difficulty="Medium"
+          equipment="No equipment"
+          onStart={handleStartWorkout}
+          onSwap={handleSwapWorkout}
+        />
+
+        <TodayProgress
+          workoutsDone={workoutsDone}
+          workoutsGoal={workoutsGoal}
+          minutesDone={minutesDone}
+          minutesGoal={minutesGoal}
+          showStreakRing={false}
+        />
+
+        <TrackingSection
+          title="Daily Tracking"
+          items={trackingItems}
+          layout="grid"
+        />
+
+        <QuickPicks onPress={handleQuickPick} />
+
+        <RecentWorkouts workouts={recentWorkouts} />
+      </ScrollView>
+
+      <WaterLogModal
+        visible={isWaterModalVisible}
+        currentOz={waterOz}
+        goalOz={waterGoal}
+        onClose={() => setIsWaterModalVisible(false)}
+        onAddWater={handleAddWater}
       />
-
-      {/* Today's Progress */}
-      <TodayProgress
-        workoutsDone={workoutsDone}
-        workoutsGoal={workoutsGoal}
-        minutesDone={minutesDone}
-        minutesGoal={minutesGoal}
-        showStreakRing={false}
-      />
-
-      {/* Daily Tracking */}
-      <TrackingSection
-        title="Daily Tracking"
-        items={trackingItems}
-        layout={trackingLayout}
-      />
-
-      <QuickPicks onPress={handleQuickPick} />
-
-      {/* Recent Workouts */}
-      <RecentWorkouts workouts={recentWorkouts} />
-    </ScrollView>
+    </>
   );
 }
