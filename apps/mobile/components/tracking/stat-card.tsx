@@ -38,14 +38,8 @@ export default function StatCard({
     ? `Goal: ${goal.toLocaleString()}${unit ? ` ${unit}` : ""}`
     : undefined;
 
-  const cardBgColor = useThemeColor(
-    { light: "#FFFFFF", dark: "#111827" },
-    "background",
-  );
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
+  const cardBgColor = useThemeColor({}, "surfaceElevated");
+  const borderColor = useThemeColor({}, "border");
 
   const cardContent =
     layout === "grid" ? (

@@ -43,11 +43,11 @@ export default function ScanResultsScreen() {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
-  const bg = isDark ? "#0B0B0F" : "#FFFFFF";
-  const cardBg = isDark ? "rgba(255,255,255,0.06)" : "#F6F7FB";
-  const text = isDark ? "#FFFFFF" : "#111111";
-  const subtext = isDark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.55)";
-  const border = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const bg = isDark ? "#111111" : "#FFFFFF";
+  const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
+  const text = isDark ? "#F2F2F7" : "#111111";
+  const subtext = isDark ? "#8E8E93" : "rgba(0,0,0,0.55)";
+  const border = isDark ? "#3A3A3A" : "rgba(0,0,0,0.08)";
 
   const params = useLocalSearchParams<{ sessionId?: string; session_id?: string }>();
   const sessionId = params.sessionId ?? params.session_id;
@@ -128,9 +128,9 @@ export default function ScanResultsScreen() {
 
           <Pressable
             onPress={() => router.back()}
-            style={{ padding: 12, borderRadius: 12, backgroundColor: isDark ? "#111827" : "#E5E7EB" }}
+            style={{ padding: 12, borderRadius: 12, backgroundColor: isDark ? "#252525" : "#E5E7EB" }}
           >
-            <Text style={{ color: isDark ? "white" : "#111827", fontWeight: "800" }}>
+            <Text style={{ color: isDark ? "#F2F2F7" : "#111827", fontWeight: "800" }}>
               Go Back
             </Text>
           </Pressable>

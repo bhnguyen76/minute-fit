@@ -124,7 +124,7 @@ export default function ScanCaptureScreen() {
       <View style={{ flexDirection: "row", gap: 10 }}>
         <Pressable
           onPress={() => pickImage(view, true)}
-          style={{ padding: 12, borderRadius: 10, backgroundColor: "#111827" }}
+          style={{ padding: 12, borderRadius: 10, backgroundColor: "#1C1C1E" }}
         >
           <Text style={{ color: "white", fontWeight: "600" }}>
             Take Photo
@@ -133,7 +133,7 @@ export default function ScanCaptureScreen() {
 
         <Pressable
           onPress={() => pickImage(view, false)}
-          style={{ padding: 12, borderRadius: 10, backgroundColor: "#374151" }}
+          style={{ padding: 12, borderRadius: 10, backgroundColor: "#252525" }}
         >
           <Text style={{ color: "white", fontWeight: "600" }}>
             Choose

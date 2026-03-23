@@ -15,14 +15,14 @@ import { useAuth } from "@/contexts/auth";
 import { useHealthData } from "@/hooks/use-health-data";
 import { getAdaptiveStepGoal } from "@/services/tracking-goals";
 import { createWaterLog, getTodayWaterSummary } from "@/services/water";
-import { ScrollView, useColorScheme } from "react-native";
+import { ScrollView } from "react-native";
 import { useMemo, useState, useEffect, useCallback } from "react";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import tw from "twrnc";
 
 export default function HomeScreen() {
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
   const { user } = useAuth();
+  const backgroundColor = useThemeColor({}, "background");
 
   const {
     steps,
@@ -173,7 +173,7 @@ export default function HomeScreen() {
   return (
     <> 
       <ScrollView
-        style={[tw`flex-1`, { backgroundColor: isDark ? "#111827" : "#FFFFFF" }]}
+        style={[tw`flex-1`, { backgroundColor }]}
         contentContainerStyle={tw`p-4 pt-10`}
       >
         <GreetingHeader userName={userName} streakDays={streakDays} />
