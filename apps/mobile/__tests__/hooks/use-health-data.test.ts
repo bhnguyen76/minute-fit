@@ -104,6 +104,7 @@ describe('useHealthData — iOS with HealthKit', () => {
   });
 
   it('does NOT set isAuthorized when initHealthKit returns an error', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockAppleHealthKit.initHealthKit.mockImplementationOnce((_p: any, cb: any) => {
       cb(new Error('HealthKit unavailable'));
     });
@@ -112,6 +113,8 @@ describe('useHealthData — iOS with HealthKit', () => {
 
     await waitFor(() => expect(mockAppleHealthKit.initHealthKit).toHaveBeenCalled());
     expect(result.current.isAuthorized).toBe(false);
+    expect(errorSpy).toHaveBeenCalledWith('HealthKit init failed:', expect.any(Error));
+    errorSpy.mockRestore();
   });
 
   it('rounds step count to the nearest integer', async () => {
