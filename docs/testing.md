@@ -1,4 +1,4 @@
-# Testing Documentation — Minute Fit
+# Testing Documentation - Minute Fit
 
 ## Overview
 
@@ -65,7 +65,7 @@ Tests use an **in-memory SQLite database** (`sqlite://`) instead of PostgreSQL. 
 Each test gets a **transaction that is rolled back** on teardown, so tests are fully isolated with no cleanup overhead.
 
 ```python
-# conftest.py — how isolation works
+# conftest.py - how isolation works
 @pytest.fixture
 def db(create_tables):
     conn = TEST_ENGINE.connect()
@@ -95,8 +95,8 @@ def reset_rate_limiter():
 |---|---|
 | `client` | FastAPI `TestClient` with DB override wired in |
 | `db` | Isolated SQLAlchemy session, rolled back after each test |
-| `test_user` | Minimal user — no height/weight/age set |
-| `complete_user` | Full profile user — required for scan/workout plan tests |
+| `test_user` | Minimal user - no height/weight/age set |
+| `complete_user` | Full profile user - required for scan/workout plan tests |
 | `auth_headers` | Bearer token header for `test_user` |
 | `complete_auth_headers` | Bearer token header for `complete_user` |
 | `seeded_db` | DB pre-populated with 8 default exercises |
@@ -165,7 +165,7 @@ Verifies that every call to `POST /users/token/refresh` issues a brand-new refre
 Submits an access token to the refresh endpoint. Must return 401. Prevents token type confusion attacks where an access token is used to extend a session indefinitely.
 
 **`test_refresh_token_user_not_found`**
-Submits a cryptographically valid refresh token whose JTI was never stored in the database (crafted directly without going through login). Must return 401. Verifies that the server-side JTI store is authoritative — a valid JWT signature alone is not enough.
+Submits a cryptographically valid refresh token whose JTI was never stored in the database (crafted directly without going through login). Must return 401. Verifies that the server-side JTI store is authoritative - a valid JWT signature alone is not enough.
 
 **`test_get_current_user_rejects_refresh_token`**
 Passes a refresh token to a protected endpoint that expects an access token. Must return 401. Ensures the `type` claim is enforced.
@@ -190,20 +190,20 @@ Uploads a front image exceeding the 20 MB limit. Must return 413. Verifies the s
 User A creates a scan. User B (with a valid token) requests it by session ID. Must return 404, not 200. Verifies per-user data isolation on the scan results endpoint.
 
 **`test_analyze_value_error_from_processing`**
-The image processing pipeline raises a `ValueError` with a detailed internal message. The response must return 422 with the generic message `"Photo processing failed"` — not the raw exception string. Verifies internal details are not leaked to clients.
+The image processing pipeline raises a `ValueError` with a detailed internal message. The response must return 422 with the generic message `"Photo processing failed"` - not the raw exception string. Verifies internal details are not leaked to clients.
 
 ---
 
 ### Workout Plans
 
 **`test_today_summary_after_plan`**
-Creates a plan with an exercise only on Monday, then mocks `datetime.now` to return a fixed Monday (2024-01-01). Asserts that `day == "monday"`, `is_rest_day == false`, and the exercise name matches. If the router returns the wrong day, `workouts_goal_today` will be 0 and the test fails — exposing any bug in the day-of-week calculation.
+Creates a plan with an exercise only on Monday, then mocks `datetime.now` to return a fixed Monday (2024-01-01). Asserts that `day == "monday"`, `is_rest_day == false`, and the exercise name matches. If the router returns the wrong day, `workouts_goal_today` will be 0 and the test fails - exposing any bug in the day-of-week calculation.
 
 **`test_put_rejects_unknown_exercise_id`**
 Submits a plan referencing `exercise_id: 999999` which does not exist. Must return 400. Verifies the validation layer prevents orphaned schedule entries.
 
 **`test_patch_day_only_touches_that_day`**
-Seeds a plan with exercise A on Monday and Tuesday. PATCHes Monday with exercise B. Asserts Monday now has B while Tuesday still has A — verifying partial-day updates do not bleed into other days.
+Seeds a plan with exercise A on Monday and Tuesday. PATCHes Monday with exercise B. Asserts Monday now has B while Tuesday still has A - verifying partial-day updates do not bleed into other days.
 
 **`test_generate_plan_filters_invalid_exercise_ids`**
 Mocks the LLM to return a plan that includes a real exercise ID alongside `999999`. The API must strip the invalid ID and return only the valid entry. Verifies the post-LLM validation pass.
@@ -246,7 +246,7 @@ Login → capture refresh token → exchange for new access token → use new ac
 
 ---
 
-### Frontend — Auth Context
+### Frontend - Auth Context
 
 **`test_stores_tokens_and_sets_user_on_login`**
 Calls `login()` and asserts that `SecureStore.setItemAsync` is called with both `"token"` and `"refresh_token"`, and that the user state is populated from the `/users/me` response.
@@ -259,7 +259,7 @@ Simulates app startup with an expired token in `SecureStore`. The `/users/me` ca
 
 ---
 
-### Frontend — API Interceptors
+### Frontend - API Interceptors
 
 **`test_retries_original_request_after_refresh`**
 Simulates a 401 response on the first request, a successful token refresh on the second call, and then the original request succeeding on the third call. Asserts all three calls fire in the correct order. Verifies the interceptor's automatic retry logic works end-to-end.
@@ -269,7 +269,7 @@ When the refresh call itself returns 401, the interceptor must reject the promis
 
 ---
 
-### Frontend — HealthKit Hook
+### Frontend - HealthKit Hook
 
 **`test_counts_ASLEEP_CORE_DEEP_REM_stages`**
 Provides sleep samples with ASLEEP_CORE, ASLEEP_DEEP, and ASLEEP_REM stages. Asserts the total sleep hours is the sum of all three, excluding any AWAKE stages. Verifies the sleep quality calculation uses the correct HKCategoryValueSleepAnalysis constants.
@@ -288,14 +288,14 @@ Passes values that would compute a body fat below 3%. Asserts the return value i
 
 ## Test Scripts
 
-### Backend — Full Suite
+### Backend - Full Suite
 
 ```bash
 cd apps/api
 python -m pytest tests/ -v --tb=short
 ```
 
-### Backend — Coverage Report (HTML)
+### Backend - Coverage Report (HTML)
 
 ```bash
 cd apps/api
@@ -303,35 +303,35 @@ python -m pytest tests/ --cov=app --cov-report=html
 # Open htmlcov/index.html in a browser
 ```
 
-### Backend — Only Fast Unit Tests
+### Backend - Only Fast Unit Tests
 
 ```bash
 cd apps/api
 python -m pytest tests/unit/ -v
 ```
 
-### Backend — Only End-to-End Workflows
+### Backend - Only End-to-End Workflows
 
 ```bash
 cd apps/api
 python -m pytest tests/integration/test_workflows.py -v
 ```
 
-### Frontend — Full Suite with Coverage
+### Frontend - Full Suite with Coverage
 
 ```bash
 cd apps/mobile
 npx jest --coverage --coverageDirectory=coverage
 ```
 
-### Frontend — Single Component
+### Frontend - Single Component
 
 ```bash
 cd apps/mobile
 npx jest __tests__/components/today-progress.test.tsx --verbose
 ```
 
-### Frontend — All Context Tests
+### Frontend - All Context Tests
 
 ```bash
 cd apps/mobile
