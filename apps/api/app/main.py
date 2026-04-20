@@ -139,5 +139,6 @@ def health_check():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return {"status": "healthy"}
-    except Exception as e:
-        return {"status": "unhealthy", "detail": str(e)}
+    except Exception:
+        _log.exception("Health check DB probe failed")
+        return {"status": "unhealthy"}

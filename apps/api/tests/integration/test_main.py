@@ -20,4 +20,4 @@ def test_health_check_unhealthy(client, mocker):
     assert r.status_code == 200
     data = r.json()
     assert data["status"] == "unhealthy"
-    assert "detail" in data
+    assert "detail" not in data
