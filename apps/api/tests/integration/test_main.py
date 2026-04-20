@@ -8,12 +8,10 @@ def test_root(client):
 
 
 def test_health_check_healthy(client):
-    # The test engine is SQLite and will succeed
+    # The test engine is SQLite in-memory — the SELECT 1 always succeeds.
     r = client.get("/health")
     assert r.status_code == 200
-    # May be "healthy" (SQLite works) or "unhealthy" depending on patching;
-    # just verify the endpoint returns valid JSON with a "status" key.
-    assert "status" in r.json()
+    assert r.json()["status"] == "healthy"
 
 
 def test_health_check_unhealthy(client, mocker):

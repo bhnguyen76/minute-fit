@@ -214,7 +214,10 @@ def test_upload_avatar_success(client, auth_headers, mocker, tmp_path):
         "file": ("avatar.jpg", io.BytesIO(make_jpeg_bytes()), "image/jpeg"),
     })
     assert r.status_code == 200
-    assert r.json()["profile_picture"] is not None
+    filename = r.json()["profile_picture"]
+    assert filename is not None
+    # Verify the sanitized JPEG was actually written to disk.
+    assert (tmp_path / filename).exists()
 
 
 # ---------------------------------------------------------------------------
